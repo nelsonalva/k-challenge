@@ -1,6 +1,5 @@
 <?php
 
-namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
@@ -14,5 +13,8 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // \App\Models\User::factory(10)->create();
+        App\Models\User::factory()->count(3)->create();
+        App\Models\Post::factory()->count(12)->create();
+        App\Models\Comment::factory()->count(50)->create();
     }
 }
