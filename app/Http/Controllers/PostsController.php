@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Http\Resources\PostResource;
+use App\Http\Resources\PostsResource;
 
 class PostsController extends Controller
 {
@@ -16,18 +18,7 @@ class PostsController extends Controller
     {
         // return response()->json(Post::get(), 200);
 
-        $type = 'post';
-        $id = Post::get('id');
-
-        return response()->json(array(
-            'data' => array(
-                'type' => $type,
-                'id' => $id,
-                'attributes' => array(
-                    'title' => 'Test title'
-                )
-            )
-        ), 200);
+        return new PostsResource(Post::get());
     }
 
     /**
@@ -59,7 +50,10 @@ class PostsController extends Controller
      */
     public function show(Post $post)
     {
-        //
+        /** To omit 'data' at the top when searching individual posts */
+        PostResource::withoutWrapping();
+
+        return new PostResource($post);
     }
 
     /**
