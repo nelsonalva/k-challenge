@@ -14,8 +14,6 @@ class CommentsResource extends ResourceCollection
      */
     public function toArray($request)
     {
-        // return parent::toArray($request);
-
         $comments = CommentResource::collection($this->collection);
 
         return [

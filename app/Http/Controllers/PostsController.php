@@ -16,9 +16,7 @@ class PostsController extends Controller
      */
     public function index()
     {
-        // return response()->json(Post::get(), 200);
-
-        return new PostsResource(Post::get());
+        return new PostsResource(Post::paginate(5));
     }
 
     /**
