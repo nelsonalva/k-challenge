@@ -20,6 +20,5 @@ class CommentsResource extends ResourceCollection
             'data' => $comments,
         ];
 
-
     }
 }

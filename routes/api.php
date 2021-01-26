@@ -22,7 +22,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 // Route::get('posts', [PostsController::class, 'index']);
 
-Route::apiResource('posts', PostsController::class);
+Route::apiResource('public/posts', PostsController::class);
+
+Route::apiResource('protected/posts', PostsController::class);
+
 Route::apiResource('comments', CommentsController::class);
 
 Route::get(
