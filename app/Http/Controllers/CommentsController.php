@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Http\Resources\CommentResource;
+use App\Http\Resources\CommentsResource;
+use Illuminate\Support\Facades\Route;
+use App\Services\Tools;
 
 class CommentsController extends Controller
 {
@@ -15,6 +20,45 @@ class CommentsController extends Controller
     public function index()
     {
         //
+
+    }
+
+    public function indexPublicPostComments(int $post)
+    {
+
+        // $comments = (new CommentsResource(
+        //     Comment::get()
+        //         ->where('post_id', $post)
+        //         ->where('is_protected', 0)
+        //         ->where('is_published', 1)
+        // ));
+
+        $comments = new CommentsResource(
+            Comment::where([
+                ['post_id', $post],
+                ['is_protected', 0],
+                ['is_published', 1]
+            ])->paginate(5)
+        );
+
+
+
+
+        return $comments;
+    }
+
+    public function indexProtectedPostComments(int $post)
+    {
+
+        $comments = new CommentsResource(
+            Comment::where([
+                ['post_id', $post],
+                ['is_protected', 1],
+                ['is_published', 1]
+            ])->paginate(5)
+        );
+
+        return $comments;
     }
 
     /**
@@ -46,7 +90,9 @@ class CommentsController extends Controller
      */
     public function show(Comment $comment)
     {
-        //
+        // CommentResource::withoutWrapping();
+
+        return new CommentResource($comment);
     }
 
     /**

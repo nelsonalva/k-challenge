@@ -20,6 +20,11 @@ class CommentResource extends JsonResource
             'id' => (string)$this->id,
             'attributes' => [
                 'content' => $this->content,
+                'user_id' => $this->user_id,
+                'post_id' => $this->post_id,
+                'is_protected' => $this->is_protected,
+                'is_published' => $this->is_published,
+
             ]
         ];
     }

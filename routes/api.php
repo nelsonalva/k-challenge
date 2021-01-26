@@ -43,3 +43,10 @@ Route::get(
         'as' => 'posts.comments',
     ]
 );
+
+Route::post('protected/posts', [PostsController::class, 'store']);
+Route::put('protected/posts/{post}', [PostsController::class, 'update']);
+Route::delete('protected/posts/{post}', [PostsController::class, 'destroy']);
+
+Route::get('public/comments/post/{post_id}', [CommentsController::class, 'indexPublicPostComments']);
+Route::get('protected/comments/post/{post_id}', [CommentsController::class, 'indexProtectedPostComments']);

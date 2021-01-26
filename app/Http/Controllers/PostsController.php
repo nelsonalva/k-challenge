@@ -50,7 +50,16 @@ class PostsController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $trimmed = Tools::trimRoute(Route::getFacadeRoot()->current()->uri());
+
+        if ($trimmed=='protected') {
+            # code...
+            $post = Post::create($request->all());
+            return response()->json($post, 201);
+        } else{
+            return array('ErrorMessage' => 'You don\'t have access to insert a resource');
+
+        }
     }
 
     /**
@@ -105,7 +114,8 @@ class PostsController extends Controller
      */
     public function update(Request $request, Post $post)
     {
-        //
+        $post->update($request->all());
+        return response()->json($post, 200);
     }
 
     /**
@@ -116,6 +126,7 @@ class PostsController extends Controller
      */
     public function destroy(Post $post)
     {
-        //
+        $post->delete();
+        return response()->json(null, 204);
     }
 }
