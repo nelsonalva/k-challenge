@@ -20,17 +20,33 @@ class PostsController extends Controller
     public function index()
     {
         // return new PostsResource(Post::paginate());
-        $trimmed = Tools::trimRoute(Route::getFacadeRoot()->current()->uri());
 
-        if ($trimmed == 'protected') {
-            return new PostsResource(Post::where('is_protected', 1)
-                ->paginate(5));
-        }
-
-        return new PostsResource(Post::where('is_published', 1)
-            ->where('is_protected', 0)
-            ->paginate(5));
     }
+
+    public function indexPublicPosts()
+    {
+        $posts = new PostsResource(
+            Post::where([
+                ['is_protected', 0],
+                ['is_published', 1]
+            ])->paginate(5)
+        );
+
+        return $posts;
+    }
+
+    public function indexProtectedPosts()
+    {
+        $posts = new PostsResource(
+            Post::where([
+                ['is_protected', 1],
+                ['is_published', 1]
+            ])->paginate(5)
+        );
+
+        return $posts;
+    }
+
 
     /**
      * Show the form for creating a new resource.
@@ -50,16 +66,8 @@ class PostsController extends Controller
      */
     public function store(Request $request)
     {
-        $trimmed = Tools::trimRoute(Route::getFacadeRoot()->current()->uri());
-
-        if ($trimmed=='protected') {
-            # code...
             $post = Post::create($request->all());
             return response()->json($post, 201);
-        } else{
-            return array('ErrorMessage' => 'You don\'t have access to insert a resource');
-
-        }
     }
 
     /**
@@ -70,29 +78,38 @@ class PostsController extends Controller
      */
     public function show(Post $post)
     {
-        $trimmed = Tools::trimRoute(Route::getFacadeRoot()->current()->uri());
+        
+    }
 
+    public function showPublicPosts(Post $post)
+    {
         /** To remove 'data' at the top when searching individual posts */
         PostResource::withoutWrapping();
 
         $isProtected = json_decode((new PostResource($post))
             ->toJson(), true)['attributes']['is_protected'];
 
-        /**  */
-        if ($trimmed == 'protected' && $isProtected == '1') {
-            # code...
+        if ($isProtected == 0) {
             return new PostResource($post);
-        } elseif ($trimmed == 'public' && $isProtected == '0') {
-            return new PostResource($post);
-        } elseif ($trimmed == 'protected' && $isProtected == '0') {
-            return array('ErrorMessage' => 'you are trying to access to a public resource from a protected endpoint');
-        } elseif ($trimmed == 'public' && $isProtected == '1') {
-            return array('ErrorMessage' => 'you are trying to access to a protected resource from a public endpoint');
         } else {
-            return array('ErrorMessage' => 'There is a problem with the route you are trying to access');
-
+            return array('ErrorMessage' => 'you are trying to access to a protected resource from a public endpoint');
         }
     }
+
+    public function showProtectedPosts(Post $post)
+    {
+        PostResource::withoutWrapping();
+
+        $isProtected = json_decode((new PostResource($post))
+            ->toJson(), true)['attributes']['is_protected'];
+
+        if ($isProtected == 1) {
+            return new PostResource($post);
+        } else {
+            return array('ErrorMessage' => 'you are trying to access to a public resource from a protected endpoint');
+        }
+    }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -112,8 +129,12 @@ class PostsController extends Controller
      * @param  \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Post $post)
+    public function update(Request $request, $postId)
     {
+        $post = Post::find($postId);
+        if (is_null($post)){
+            return response()->json(null, 404);
+        }
         $post->update($request->all());
         return response()->json($post, 200);
     }
@@ -124,8 +145,13 @@ class PostsController extends Controller
      * @param  \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Post $post)
+    public function destroy($postId)
     {
+        $post = Post::find($postId);
+        if (is_null($post)){
+            return response()->json(null, 404);
+        }
+
         $post->delete();
         return response()->json(null, 204);
     }

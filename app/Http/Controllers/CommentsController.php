@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\User;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Http\Resources\CommentResource;
@@ -26,12 +27,10 @@ class CommentsController extends Controller
     public function indexPublicPostComments(int $post)
     {
 
-        // $comments = (new CommentsResource(
-        //     Comment::get()
-        //         ->where('post_id', $post)
-        //         ->where('is_protected', 0)
-        //         ->where('is_published', 1)
-        // ));
+        $post = Post::find($post);
+        if (is_null($post)){
+            return response()->json(null, 404);
+        }
 
         $comments = new CommentsResource(
             Comment::where([
@@ -41,14 +40,15 @@ class CommentsController extends Controller
             ])->paginate(5)
         );
 
-
-
-
         return $comments;
     }
 
     public function indexProtectedPostComments(int $post)
     {
+        $post = Post::find($post);
+        if (is_null($post)){
+            return response()->json(null, 404);
+        }
 
         $comments = new CommentsResource(
             Comment::where([
@@ -79,7 +79,8 @@ class CommentsController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $comment = Comment::create($request->all());
+        return response()->json($comment, 201);
     }
 
     /**
@@ -90,9 +91,32 @@ class CommentsController extends Controller
      */
     public function show(Comment $comment)
     {
-        // CommentResource::withoutWrapping();
+        //
+    }
 
-        return new CommentResource($comment);
+    public function indexPublicUserComments(int $user)
+    {
+        $comments = new CommentsResource(
+            Comment::where([
+                ['user_id', $user],
+                ['is_protected', 0],
+                ['is_published', 1]
+            ])->paginate(5)
+        );
+
+        return $comments;
+    }
+
+    public function indexProtectedUserComments(User $user)
+    {
+        $comments = new CommentsResource(
+            Comment::where([
+                ['user_id', $user],
+                ['is_protected', 1]
+            ])->paginate(5)
+        );
+
+        return $comments;
     }
 
     /**
@@ -113,9 +137,16 @@ class CommentsController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Comment $comment)
+    public function update(Request $request, $commentId)
     {
-        //
+        $comment = Comment::find($commentId);
+        $userId = $comment->user_id;
+        return $userId;
+        // if (is_null($comment)){
+        //     return response()->json(null, 404);
+        // }
+        // $comment->update($request->all());
+        // return response()->json($comment, 200);
     }
 
     /**
@@ -124,8 +155,15 @@ class CommentsController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Comment $comment)
+    public function destroy($commentId)
     {
-        //
+
+        $comment = Comment::find($commentId);
+        if (is_null($comment)){
+            return response()->json(null, 404);
+        }
+
+        $comment->delete();
+        return response()->json(null, 204);
     }
 }

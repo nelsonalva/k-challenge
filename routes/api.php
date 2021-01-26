@@ -22,11 +22,11 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 // Route::get('posts', [PostsController::class, 'index']);
 
-Route::apiResource('public/posts', PostsController::class);
+// Route::apiResource('public/posts', PostsController::class);
 
-Route::apiResource('protected/posts', PostsController::class);
+// Route::apiResource('protected/posts', PostsController::class);
 
-Route::apiResource('comments', CommentsController::class);
+// Route::apiResource('comments', CommentsController::class);
 
 Route::get(
     'posts/{post}/relationships/comments',
@@ -44,9 +44,52 @@ Route::get(
     ]
 );
 
+Route::get(
+    'public/posts',
+    [
+        'uses' => PostsController::class . '@indexPublicPosts',
+        'as' => 'public.posts.show',
+    ]
+);
+
+Route::get(
+    'protected/posts',
+    [
+        'uses' => PostsController::class . '@indexProtectedPosts',
+        'as' => 'protected.posts.show',
+    ]
+);
+
+Route::get(
+    'public/posts/{post}',
+    [
+        'uses' => PostsController::class . '@showPublicPosts'
+    ]
+);
+
+Route::get(
+    'public/comments/user/{user}',
+    [
+        'uses' => CommentsController::class . '@indexPublicUserComments'
+    ]
+);
+
+Route::get(
+    'protected/comments/user/{user}',
+    [
+        'uses' => CommentsController::class . '@indexProtectedUserComments'
+    ]
+);
+
+Route::get('protected/posts/{post}', [PostsController::class, 'showProtectedPosts']);
+
 Route::post('protected/posts', [PostsController::class, 'store']);
 Route::put('protected/posts/{post}', [PostsController::class, 'update']);
 Route::delete('protected/posts/{post}', [PostsController::class, 'destroy']);
 
 Route::get('public/comments/post/{post_id}', [CommentsController::class, 'indexPublicPostComments']);
 Route::get('protected/comments/post/{post_id}', [CommentsController::class, 'indexProtectedPostComments']);
+
+Route::post('protected/comments', [CommentsController::class, 'store']);
+Route::put('protected/comments/{comment}', [CommentsController::class, 'update']);
+Route::delete('protected/comments/{comment}', [CommentsController::class, 'destroy']);

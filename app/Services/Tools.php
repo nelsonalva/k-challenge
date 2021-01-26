@@ -14,10 +14,8 @@ class Tools
             return 'protected';
         }
         else {
-            return 'other';
+            return 'route';
         }
-
-        // return $route;
 
     }
 }

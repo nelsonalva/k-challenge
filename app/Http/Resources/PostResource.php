@@ -3,7 +3,8 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-
+use Illuminate\Support\Facades\Route;
+use App\Services\Tools;
 class PostResource extends JsonResource
 {
     /**
@@ -14,6 +15,9 @@ class PostResource extends JsonResource
      */
     public function toArray($request)
     {
+        $routeDefinition = Tools::trimRoute(Route::getFacadeRoot()->current()->uri());
+
+
         return [
             'type' => 'posts',
             'id' => (string)$this->id,
@@ -30,7 +34,7 @@ class PostResource extends JsonResource
             ],
             'relationships' => new PostRelationshipResource($this),
             'links' => [
-                'self' => route('posts.show', ['post' => $this->id])
+                'self' => route($routeDefinition . '.posts.show', ['post' => $this->id])
             ],
 
         ];
