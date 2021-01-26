@@ -6,10 +6,9 @@ use App\Models\Comment;
 use App\Models\User;
 use App\Models\Post;
 use Illuminate\Http\Request;
-use App\Http\Resources\CommentResource;
 use App\Http\Resources\CommentsResource;
-use Illuminate\Support\Facades\Route;
-use App\Services\Tools;
+use App\Services\UserService;
+
 
 class CommentsController extends Controller
 {
@@ -28,7 +27,7 @@ class CommentsController extends Controller
     {
 
         $post = Post::find($post);
-        if (is_null($post)){
+        if (is_null($post)) {
             return response()->json(null, 404);
         }
 
@@ -43,22 +42,28 @@ class CommentsController extends Controller
         return $comments;
     }
 
-    public function indexProtectedPostComments(int $post)
+    public function indexProtectedPostComments(Request $request, int $post)
     {
-        $post = Post::find($post);
-        if (is_null($post)){
-            return response()->json(null, 404);
+        $validation = UserService::validateCredentials($request);
+
+        if ($validation == "ok") {
+            $post = Post::find($post);
+            if (is_null($post)) {
+                return response()->json(null, 404);
+            }
+
+            $comments = new CommentsResource(
+                Comment::where([
+                    ['post_id', $post],
+                    ['is_protected', 1],
+                    ['is_published', 1]
+                ])->paginate(5)
+            );
+
+            return $comments;
+        } else {
+            return ['validationError' => $validation];
         }
-
-        $comments = new CommentsResource(
-            Comment::where([
-                ['post_id', $post],
-                ['is_protected', 1],
-                ['is_published', 1]
-            ])->paginate(5)
-        );
-
-        return $comments;
     }
 
     /**
@@ -79,8 +84,14 @@ class CommentsController extends Controller
      */
     public function store(Request $request)
     {
-        $comment = Comment::create($request->all());
-        return response()->json($comment, 201);
+        $validation = UserService::validateCredentials($request);
+
+        if ($validation == "ok") {
+            $comment = Comment::create($request->all());
+            return response()->json($comment, 201);
+        } else {
+            return ['validationError' => $validation];
+        }
     }
 
     /**
@@ -107,16 +118,22 @@ class CommentsController extends Controller
         return $comments;
     }
 
-    public function indexProtectedUserComments(User $user)
+    public function indexProtectedUserComments(Request $request, int $user)
     {
-        $comments = new CommentsResource(
-            Comment::where([
-                ['user_id', $user],
-                ['is_protected', 1]
-            ])->paginate(5)
-        );
+        $validation = UserService::validateCredentials($request);
 
-        return $comments;
+        if ($validation == "ok") {
+            $comments = new CommentsResource(
+                Comment::where([
+                    ['user_id', $user],
+                    ['is_protected', 1]
+                ])->paginate(5)
+            );
+
+            return $comments;
+        } else {
+            return ['validationError' => $validation];
+        }
     }
 
     /**
@@ -139,14 +156,20 @@ class CommentsController extends Controller
      */
     public function update(Request $request, $commentId)
     {
-        $comment = Comment::find($commentId);
-        $userId = $comment->user_id;
-        return $userId;
-        // if (is_null($comment)){
-        //     return response()->json(null, 404);
-        // }
-        // $comment->update($request->all());
-        // return response()->json($comment, 200);
+        $validation = UserService::validateCredentials($request);
+
+        if ($validation == "ok") {
+            $comment = Comment::find($commentId);
+            $userId = $comment->user_id;
+
+            if (is_null($comment)) {
+                return response()->json(null, 404);
+            }
+            $comment->update($request->all());
+            return response()->json($comment, 200);
+        } else {
+            return ['validationError' => $validation];
+        }
     }
 
     /**
@@ -155,15 +178,20 @@ class CommentsController extends Controller
      * @param  \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      */
-    public function destroy($commentId)
+    public function destroy(Request $request, $commentId)
     {
+        $validation = UserService::validateCredentials($request);
 
-        $comment = Comment::find($commentId);
-        if (is_null($comment)){
-            return response()->json(null, 404);
+        if ($validation == "ok") {
+            $comment = Comment::find($commentId);
+            if (is_null($comment)) {
+                return response()->json(null, 404);
+            }
+
+            $comment->delete();
+            return response()->json(null, 204);
+        } else {
+            return ['validationError' => $validation];
         }
-
-        $comment->delete();
-        return response()->json(null, 204);
     }
 }

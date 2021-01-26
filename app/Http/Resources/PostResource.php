@@ -17,7 +17,6 @@ class PostResource extends JsonResource
     {
         $routeDefinition = Tools::trimRoute(Route::getFacadeRoot()->current()->uri());
 
-
         return [
             'type' => 'posts',
             'id' => (string)$this->id,

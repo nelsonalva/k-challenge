@@ -6,9 +6,8 @@ use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\PostsResource;
-use Illuminate\Support\Facades\Route;
-use App\Services\Tools;
-use Psy\Command\WhereamiCommand;
+use App\Services\UserService;
+
 
 class PostsController extends Controller
 {
@@ -35,16 +34,21 @@ class PostsController extends Controller
         return $posts;
     }
 
-    public function indexProtectedPosts()
+    public function indexProtectedPosts(Request $request)
     {
-        $posts = new PostsResource(
-            Post::where([
-                ['is_protected', 1],
-                ['is_published', 1]
-            ])->paginate(5)
-        );
+        $validation = UserService::validateCredentials($request);
 
-        return $posts;
+        if ($validation == "ok") {
+            $posts = new PostsResource(
+                Post::where([
+                    ['is_protected', 1],
+                    ['is_published', 1]
+                ])->paginate(5)
+            );
+            return $posts;
+        } else {
+            return ['validationError' => $validation];
+        }
     }
 
 
@@ -66,8 +70,14 @@ class PostsController extends Controller
      */
     public function store(Request $request)
     {
+        $validation = UserService::validateCredentials($request);
+
+        if ($validation == "ok") {
             $post = Post::create($request->all());
             return response()->json($post, 201);
+        } else {
+            return ['validationError' => $validation];
+        }
     }
 
     /**
@@ -78,7 +88,6 @@ class PostsController extends Controller
      */
     public function show(Post $post)
     {
-        
     }
 
     public function showPublicPosts(Post $post)
@@ -96,17 +105,21 @@ class PostsController extends Controller
         }
     }
 
-    public function showProtectedPosts(Post $post)
+    public function showProtectedPosts(Request $request, Post $post)
     {
+        $validation = UserService::validateCredentials($request);
+
         PostResource::withoutWrapping();
-
-        $isProtected = json_decode((new PostResource($post))
-            ->toJson(), true)['attributes']['is_protected'];
-
-        if ($isProtected == 1) {
-            return new PostResource($post);
+        if ($validation == "ok") {
+            $isProtected = json_decode((new PostResource($post))
+                ->toJson(), true)['attributes']['is_protected'];
+            if ($isProtected == 1) {
+                return new PostResource($post);
+            } else {
+                return array('ErrorMessage' => 'you are trying to access to a public resource from a protected endpoint');
+            }
         } else {
-            return array('ErrorMessage' => 'you are trying to access to a public resource from a protected endpoint');
+            return ['validationError' => $validation];
         }
     }
 
@@ -131,12 +144,18 @@ class PostsController extends Controller
      */
     public function update(Request $request, $postId)
     {
-        $post = Post::find($postId);
-        if (is_null($post)){
-            return response()->json(null, 404);
+        $validation = UserService::validateCredentials($request);
+
+        if ($validation == "ok") {
+            $post = Post::find($postId);
+            if (is_null($post)) {
+                return response()->json(null, 404);
+            }
+            $post->update($request->all());
+            return response()->json($post, 200);
+        } else {
+            return ['validationError' => $validation];
         }
-        $post->update($request->all());
-        return response()->json($post, 200);
     }
 
     /**
@@ -145,14 +164,20 @@ class PostsController extends Controller
      * @param  \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      */
-    public function destroy($postId)
+    public function destroy(Request $request, $postId)
     {
-        $post = Post::find($postId);
-        if (is_null($post)){
-            return response()->json(null, 404);
-        }
+        $validation = UserService::validateCredentials($request);
 
-        $post->delete();
-        return response()->json(null, 204);
+        if ($validation == "ok") {
+            $post = Post::find($postId);
+            if (is_null($post)) {
+                return response()->json(null, 404);
+            }
+
+            $post->delete();
+            return response()->json(null, 204);
+        } else {
+            return ['validationError' => $validation];
+        }
     }
 }
