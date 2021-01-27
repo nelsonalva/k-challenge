@@ -37,7 +37,7 @@ class PostsController extends Controller
     public function indexProtectedPosts(Request $request)
     {
         $validation = UserService::validateCredentials($request);
-
+        /** Validate credentials */
         if ($validation == "ok") {
             $posts = new PostsResource(
                 Post::where([
@@ -145,14 +145,21 @@ class PostsController extends Controller
     public function update(Request $request, $postId)
     {
         $validation = UserService::validateCredentials($request);
+        $userId = UserService::findUserId($request);
 
+        /** Validating credentials */
         if ($validation == "ok") {
             $post = Post::find($postId);
             if (is_null($post)) {
                 return response()->json(null, 404);
             }
-            $post->update($request->all());
-            return response()->json($post, 200);
+            /** Verifying user match */
+            if ($userId == $post->user_id) {
+                $post->update($request->all());
+                return response()->json($post, 200);
+            } else {
+                return ['validationError' => 'A post can only be updated by its autor'];
+            }
         } else {
             return ['validationError' => $validation];
         }
@@ -167,15 +174,21 @@ class PostsController extends Controller
     public function destroy(Request $request, $postId)
     {
         $validation = UserService::validateCredentials($request);
+        $userId = UserService::findUserId($request);
+
 
         if ($validation == "ok") {
             $post = Post::find($postId);
             if (is_null($post)) {
                 return response()->json(null, 404);
             }
-
-            $post->delete();
-            return response()->json(null, 204);
+            /** Verifying user match */
+            if ($userId == $post->user_id) {
+                $post->delete();
+                return response()->json(null, 204);
+            } else {
+                return ['validationError' => 'A post can only be deleted by its autor'];
+            }
         } else {
             return ['validationError' => $validation];
         }

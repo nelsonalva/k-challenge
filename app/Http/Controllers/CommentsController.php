@@ -23,17 +23,17 @@ class CommentsController extends Controller
 
     }
 
-    public function indexPublicPostComments(int $post)
+    public function indexPublicPostComments(int $postId)
     {
-
-        $post = Post::find($post);
+        /** Verify that the post exists */
+        $post = Post::find($postId);
         if (is_null($post)) {
             return response()->json(null, 404);
         }
 
         $comments = new CommentsResource(
             Comment::where([
-                ['post_id', $post],
+                ['post_id', $postId],
                 ['is_protected', 0],
                 ['is_published', 1]
             ])->paginate(5)
@@ -42,19 +42,19 @@ class CommentsController extends Controller
         return $comments;
     }
 
-    public function indexProtectedPostComments(Request $request, int $post)
+    public function indexProtectedPostComments(Request $request, int $postId)
     {
         $validation = UserService::validateCredentials($request);
-
+        /** Verify that the post exists */
         if ($validation == "ok") {
-            $post = Post::find($post);
+            $post = Post::find($postId);
             if (is_null($post)) {
                 return response()->json(null, 404);
             }
 
             $comments = new CommentsResource(
                 Comment::where([
-                    ['post_id', $post],
+                    ['post_id', $postId],
                     ['is_protected', 1],
                     ['is_published', 1]
                 ])->paginate(5)
@@ -157,16 +157,21 @@ class CommentsController extends Controller
     public function update(Request $request, $commentId)
     {
         $validation = UserService::validateCredentials($request);
+        $userId = UserService::findUserId($request);
 
         if ($validation == "ok") {
             $comment = Comment::find($commentId);
-            $userId = $comment->user_id;
 
             if (is_null($comment)) {
                 return response()->json(null, 404);
             }
-            $comment->update($request->all());
-            return response()->json($comment, 200);
+            /** Verifying user match */
+            if ($userId == $comment->user_id) {
+                $comment->update($request->all());
+                return response()->json($comment, 200);
+            } else {
+                return ['validationError' => 'A post can only be updated by its autor'];
+            }
         } else {
             return ['validationError' => $validation];
         }
@@ -181,15 +186,20 @@ class CommentsController extends Controller
     public function destroy(Request $request, $commentId)
     {
         $validation = UserService::validateCredentials($request);
+        $userId = UserService::findUserId($request);
 
         if ($validation == "ok") {
             $comment = Comment::find($commentId);
             if (is_null($comment)) {
                 return response()->json(null, 404);
             }
-
-            $comment->delete();
-            return response()->json(null, 204);
+            /** Verifying user match */
+            if ($userId == $comment->user_id) {
+                $comment->delete();
+                return response()->json(null, 204);
+            } else {
+                return ['validationError' => 'A comment can only be deleted by its autor'];
+            }
         } else {
             return ['validationError' => $validation];
         }

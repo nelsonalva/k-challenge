@@ -20,76 +20,53 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
-// Route::get('posts', [PostsController::class, 'index']);
 
-// Route::apiResource('public/posts', PostsController::class);
+/** Routes and aliases for JAPI Links*/
+Route::get('posts/{post}/relationships/comments', [
+    'uses' => PostRelationshipController::class . '@comments',
+    'as' => 'posts.relationships.comments',
+]);
 
-// Route::apiResource('protected/posts', PostsController::class);
+Route::get('posts/{post}/comments', [
+    'uses' => PostRelationshipController::class . '@comments',
+    'as' => 'posts.comments',
+]);
 
-// Route::apiResource('comments', CommentsController::class);
+/** Routes for Posts */
 
-Route::get(
-    'posts/{post}/relationships/comments',
-    [
-        'uses' => PostRelationshipController::class . '@comments',
-        'as' => 'posts.relationships.comments',
-    ]
-);
+Route::get('public/posts', [
+    'uses' => PostsController::class . '@indexPublicPosts',
+    'as' => 'public.posts.show',
+]);
 
-Route::get(
-    'posts/{post}/comments',
-    [
-        'uses' => PostRelationshipController::class . '@comments',
-        'as' => 'posts.comments',
-    ]
-);
+Route::get('protected/posts', [
+    'uses' => PostsController::class . '@indexProtectedPosts',
+    'as' => 'protected.posts.show',
+]);
 
-Route::get(
-    'public/posts',
-    [
-        'uses' => PostsController::class . '@indexPublicPosts',
-        'as' => 'public.posts.show',
-    ]
-);
-
-Route::get(
-    'protected/posts',
-    [
-        'uses' => PostsController::class . '@indexProtectedPosts',
-        'as' => 'protected.posts.show',
-    ]
-);
-
-Route::get(
-    'public/posts/{post}',
-    [
-        'uses' => PostsController::class . '@showPublicPosts'
-    ]
-);
-
-Route::get(
-    'public/comments/user/{user}',
-    [
-        'uses' => CommentsController::class . '@indexPublicUserComments'
-    ]
-);
-
-Route::get(
-    'protected/comments/user/{user}',
-    [
-        'uses' => CommentsController::class . '@indexProtectedUserComments'
-    ]
-);
+Route::get('public/posts/{post}', ['uses' => PostsController::class . '@showPublicPosts']);
 
 Route::get('protected/posts/{post}', [PostsController::class, 'showProtectedPosts']);
 
 Route::post('protected/posts', [PostsController::class, 'store']);
+
 Route::put('protected/posts/{post}', [PostsController::class, 'update']);
+
 Route::delete('protected/posts/{post}', [PostsController::class, 'destroy']);
 
+
+/**Routes for comments */
+
 Route::get('public/comments/post/{post_id}', [CommentsController::class, 'indexPublicPostComments']);
+
 Route::get('protected/comments/post/{post_id}', [CommentsController::class, 'indexProtectedPostComments']);
 
+Route::get('public/comments/user/{user}', ['uses' => CommentsController::class . '@indexPublicUserComments']);
+
+Route::get('protected/comments/user/{user}', ['uses' => CommentsController::class . '@indexProtectedUserComments']);
+
 Route::post('protected/comments', [CommentsController::class, 'store']);
+
 Route::put('protected/comments/{comment}', [CommentsController::class, 'update']);
+
 Route::delete('protected/comments/{comment}', [CommentsController::class, 'destroy']);
