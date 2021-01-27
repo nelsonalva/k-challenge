@@ -8,6 +8,7 @@ use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Http\Resources\CommentsResource;
 use App\Services\UserService;
+use App\Services\Tools as tools;
 
 
 class CommentsController extends Controller
@@ -87,7 +88,10 @@ class CommentsController extends Controller
         $validation = UserService::validateCredentials($request);
 
         if ($validation == "ok") {
-            $comment = Comment::create($request->all());
+            $comment = Comment::create($request->data['attributes']); // or $request->all() for all data in request
+            /** Format response */
+            $comment = tools::formatResponse($comment, 'comments');
+
             return response()->json($comment, 201);
         } else {
             return ['validationError' => $validation];
@@ -167,8 +171,13 @@ class CommentsController extends Controller
             }
             /** Verifying user match */
             if ($userId == $comment->user_id) {
-                $comment->update($request->all());
+                $comment->update($request->data['attributes']);
+
+                /** Format response */
+            $comment = tools::formatResponse($comment, 'comments');
+
                 return response()->json($comment, 200);
+
             } else {
                 return ['validationError' => 'A post can only be updated by its autor'];
             }

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\PostsResource;
 use App\Services\UserService;
+use App\Services\Tools as tools;
 
 
 class PostsController extends Controller
@@ -73,7 +74,11 @@ class PostsController extends Controller
         $validation = UserService::validateCredentials($request);
 
         if ($validation == "ok") {
-            $post = Post::create($request->all());
+            $post = Post::create($request->data['attributes']);
+
+            /** Format response */
+            $post = tools::formatResponse($post, 'posts');
+
             return response()->json($post, 201);
         } else {
             return ['validationError' => $validation];
@@ -155,7 +160,11 @@ class PostsController extends Controller
             }
             /** Verifying user match */
             if ($userId == $post->user_id) {
-                $post->update($request->all());
+                $post->update($request->data['attributes']);
+
+                /** Format response */
+                $post = tools::formatResponse($post, 'posts');
+
                 return response()->json($post, 200);
             } else {
                 return ['validationError' => 'A post can only be updated by its autor'];
